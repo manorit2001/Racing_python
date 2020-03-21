@@ -1,72 +1,86 @@
 # 1 - Import library
-import pygame
 from pygame.locals import *
 import random
-class Player:
-    def __init__(self,number):
-        self.loc=[40,number*40]
-        self.playerno=number
+from Screen import * 
+from Player import Player
 
-#def color_surface(surface, red, green, blue):
-#    arr = pygame.surfarray.pixels3d(surface)
-#    arr[:,:,0] = red
-#    arr[:,:,1] = green
-#    arr[:,:,2] = blue
-#    return arr
-#def colorize(image, newColor):
-#    """
-#    Create a "colorized" copy of a surface (replaces RGB values with the given color, preserving the per-pixel alphas of
-#    original).
-#    :param image: Surface to create a colorized copy of
-#    :param newColor: RGB color to use (original alpha values are preserved)
-#    :return: New colorized Surface instance
-#    """
-#    image = image.copy()
-#
-#    # zero out RGB values
-#    #image.fill((0, 0, 0, 255), None, pygame.BLEND_RGBA_MULT)
-#    # add in new RGB values
-#    image.fill(newColor[0:3] + (0,), None, pygame.BLEND_RGBA_ADD)
-#
-#    return image
 
-def game(players):
-    # 2 - Initialize the game
-    pygame.init()
-    width, height = 640, 480
-    screen=pygame.display.set_mode((width, height))
 
-    # 3 - Load images
-    font = pygame.font.Font('freesansbold.ttf', 16)
-    player = pygame.image.load("res/images/car.png")
-    player.convert_alpha()
-    clock = pygame.time.Clock()
-    # 4 - keep looping through
-    while 1:
-        # 5 - clear the screen before drawing it again
-        time=clock.tick(60)
-        screen.fill(0)
-        # 6 - draw the screen elements
-        #loc[0]+=1;
-        #play=colorize(player,(255,0,0))
-        for i in range(len(players)):
-            players[i].loc[0]+=random.randint(0,1)
-            text=font.render(str(i),True,(255,0,0))
-            screen.blit(player, players[i].loc)
-            screen.blit(text, (players[i].loc[0]-10,players[i].loc[1]))
-        # 7 - update the screen
-        pygame.display.update()
-        # 8 - loop through the events
-        for event in pygame.event.get():
-            # check if the event is the X button 
-            if event.type==pygame.QUIT:
-                # if it is quit the game
-                pygame.quit() 
-                exit(0) 
+class Game(Screen):
+    def __init__(self,allPlayers):
+        super().__init__()
+        self.offsetRightX=50
+        self.offsetLeftX=50
+        self.endRaceXcoord=self.width-self.carSize[0]-self.endlineSize[0]-self.offsetRightX
+        self.clock = pygame.time.Clock()
+        #pygame.Rect(0,0,width,trackwidth)
+        self.playersReachedEndline=0
+        self.rankList=[]
+        self.incrementInCarPosition=15
+        self.decrementInCarPosition=0
+        self.run(allPlayers)
+    def updateplayer(self,player):
+            currentPlayer=player
+            self.text(currentPlayer)
+            currentPlayer.coord[0]+=random.randint(self.decrementInCarPosition,self.incrementInCarPosition) #change the location of currentplayer
+            playerX,playerY=currentPlayer.coord
+            playerNo=currentPlayer.playerNo
 
+            colorGreen=(0,255,0)
+            startPoint=[self.offsetLeftX,playerY]
+            endlineX=self.width-self.endlineSize[0]-self.offsetRightX
+            endPoint=[endlineX,playerY]
+            pygame.draw.line(self.screen,colorGreen,startPoint,endPoint) #draw the raceline(Green coloured)
+
+            if(playerX>=4*self.width/5): #
+                self.incrementInCarPosition=5 #Decrease Car Increment Speed
+                self.decrementInCarPosition=-2 #Decrease Car Increment Speed
+
+            if(playerX>=self.endRaceXcoord):
+                if playerNo not in self.rankList:
+                    self.rankList.append(playerNo)
+                    print(playerNo)
+                    self.wait()
+
+            if(len(self.rankList)>0):
+                ithPosition=len(self.rankList)+1
+                self.drawtext(str(ithPosition)+" is:"+str(self.rankList[-1]))
+            self.screen.blit(self.endline, [endlineX,playerY]) #endline
+            self.screen.blit(self.car, [playerX,playerY]) #player
+    def run(self,players):
+        for i in players:
+            i.coord[0]+=self.offsetLeftX
+            i.coord[1]*=self.trackwidth
+        while 1:
+            # 5 - clear the screen before drawing it again
+            time=self.clock.tick(30)
+            self.screen.fill(0)
+            # 6 - draw the screen elements
+            for i in range(len(players)):
+                self.updateplayer(players[i])
+
+            if(len(players)==len(self.rankList)):
+                print(self.rankList)
+                pygame.quit()
+                exit(0)
+            # 7 - update the screen
+            pygame.display.update()
+            # 8 - loop through the events
+            for event in pygame.event.get():
+                # check if the event is the X button 
+                if event.type==pygame.QUIT:
+                    # if it is quit the game
+                    pygame.quit() 
+                    exit(0) 
+                if event.type==pygame.KEYDOWN:
+                    if event.key==pygame.K_p:
+                        self.wait()
+                    if event.key==pygame.K_q:
+                        pygame.quit()
+                        exit(0)
 if __name__=="__main__":
-    numplayers=5
-    players=[]
-    for i in range(numplayers):
-        players.append(Player(i))
-    game(players)
+    numplayers=10
+    playersdata=[]
+    for i in range(1,numplayers+1):
+        playersdata.append(Player(i))
+    Game(playersdata)
