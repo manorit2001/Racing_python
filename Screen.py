@@ -8,8 +8,8 @@ class Screen:
         self.trackwidth=40
         self.width, self.height = temp.width,temp.height
         # for debug purpose
-        self.width=800
-        self.height=600
+        #self.width=800
+        #self.height=600
 
         self.screen=pygame.display.set_mode((self.width, self.height))
         self.initcar()

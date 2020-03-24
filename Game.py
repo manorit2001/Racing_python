@@ -12,28 +12,44 @@ class Game(Screen):
         self.offsetRightX=50
         self.offsetLeftX=50
         self.endRaceXcoord=self.width-self.carSize[0]-self.endlineSize[0]-self.offsetRightX
+        self.endlineX=self.width-self.endlineSize[0]-self.offsetRightX
         self.clock = pygame.time.Clock()
         self.playersReachedEndline=0
         self.rankList=[]
-        self.incrementInCarPosition=5
+        self.incrementInCarPosition=15
         self.decrementInCarPosition=0
         self.semiRankList=[]
         self.recursive=1
         self.run(allPlayers,0)
+    def dispCars(self,players):
+        for i in players:
+            self.screen.blit(self.car, i.coord)
+            self.text(i)
+    def dispEndline(self,players):
+        for i in players:
+            self.screen.blit(self.endline, [self.endlineX,i.coord[1]])
+    def dispRaceline(self,players):
+        colorGreen=(0,255,0)
+        for i in range(len(players)+1):
+            playerY=(i+1)*self.trackwidth
+            # draw the raceline(Green coloured)
+            startPoint=[self.offsetLeftX,playerY]
+            endPoint=[self.endlineX,playerY]
+            pygame.draw.line(self.screen,colorGreen,startPoint,endPoint)
+    def displayall(self,players):
+        # 5 - clear the screen before drawing it again
+        colorBackground=(0,0,100)
+        self.screen.fill(colorBackground)
+        # call other display functions
+        self.dispRaceline(players)
+        self.dispEndline(players)
+        self.dispCars(players)
 
     def updateplayer(self,player):
         currentPlayer=player
-        self.text(currentPlayer)
         currentPlayer.coord[0]+=random.randint(self.decrementInCarPosition,self.incrementInCarPosition) # change the location of currentplayer
         playerX,playerY=currentPlayer.coord
         playerNo=currentPlayer.playerNo
-
-        # draw the raceline(Green coloured)
-        colorGreen=(0,255,0)
-        startPoint=[self.offsetLeftX,playerY]
-        endlineX=self.width-self.endlineSize[0]-self.offsetRightX
-        endPoint=[endlineX,playerY]
-        pygame.draw.line(self.screen,colorGreen,startPoint,endPoint)
 
         # Decrease Car Increment Speed after 4/5th of the track 
         if(playerX>=4*self.width/5): 
@@ -48,56 +64,64 @@ class Game(Screen):
                 print(playerNo)
                 #print(self.semiRankList)
                 #self.wait()
+    def resolveTie(self,players):
+        for i in self.semiRankList:
+            self.rankList.remove(i) # remove the players with same end time in ranklist
+        self.recursive+=1
+        print(self.semiRankList)
+        coords=[(players.index(i),i.coord[1]) for i in self.semiRankList] # save the Y coord of the current users to set it back after recurse
+        for i in range(3,1,-1): # countdown for tie match
+            self.displayall(players)
+            self.drawtext("Resolving tie between {} in {}".format(str(self.semiRankList),i))
+            pygame.display.update()
+            time.sleep(1)
+        self.run(self.semiRankList,len(self.rankList)) # recurse for tie match
+        for index,coordY in coords:
+            players[index].coord[1]=coordY # set the Y coordinates again of the players in the tie
+        self.recursive-=1 # for debugging purpose
 
-        # if ranklist has something then display the ith position winner
-        if(len(self.rankList)>0):
-            ithPosition=len(self.rankList)+1
-            self.drawtext(str(ithPosition)+" is:"+str(self.rankList[-1]))
-        self.screen.blit(self.endline, [endlineX,playerY]) #endline
-        self.screen.blit(self.car, [playerX,playerY]) #player
         
     def run(self,players,initial):
         # assign starting offset and position to all the players
+        self.incrementInCarPosition=15
+        self.decrementInCarPosition=0
         self.semiRankList=[]
         for j in range(len(players)):
             i=players[j]
             i.coord[0]=self.offsetLeftX
             i.coord[1]=(j+1)*self.trackwidth
         while 1:
-            # 5 - clear the screen before drawing it again
             times=self.clock.tick(30)
-            self.screen.fill((0,0,255))
             # 6 - draw the screen elements
+            self.displayall(players)
+
             for i in range(len(players)):
                 self.updateplayer(players[i])
+
+            # resolve tie between people
             if(len(self.semiRankList)>1):
                 print(self.semiRankList)
-                for i in self.semiRankList:
-                    self.rankList.remove(i)
-                self.recursive+=1
-                print(self.semiRankList)
-                coords=[(players.index(i),i.coord[1]) for i in self.semiRankList]
-                for i in range(3,1,-1):
-                    self.drawtext("Resolving tie in {}".format(i))
-                    pygame.display.update()
-                    time.sleep(1)
-                self.run(self.semiRankList,len(self.rankList))
-                for index,coordY in coords:
-                    players[index].coord[1]=coordY
-                self.recursive-=1
+                self.resolveTie(players)
+
+            # print the ith winner
+            if(len(self.semiRankList)==1):
+                ithPosition=len(self.rankList)
+                temp=['st','nd','rd','th']
+                self.drawtext(str(ithPosition)+temp[ithPosition-1 if ithPosition<=4 else 3]+" is:"+str(self.rankList[-1]))
+                pygame.display.update()
+                time.sleep(1)
 
             self.semiRankList=[]
             
             # check if all the players have crossed the end line
             if(initial+len(players)==len(self.rankList)):
                 break
-            if(self.recursive>1 and players[0].coord[0]==self.offsetLeftX):
-                print("hehe")
-            # 7 - update the screen
+
             pygame.display.update()
+            self.eventHandler()
+
+    def eventHandler(self):
             # 8 - loop through the events
-            if(self.recursive>1 and players[0].coord[0]==self.offsetLeftX):
-                print("haha")
             for event in pygame.event.get():
                 # check if the event is the X button 
                 if event.type==pygame.QUIT:
@@ -110,22 +134,10 @@ class Game(Screen):
                         # wait till p is pressed again
                         self.wait()
                     if event.key==pygame.K_q:
+                        self.rankList=[]
                         pygame.quit()
                         exit(0)
 
     def getRankList(self):
         return self.rankList
 
-if __name__=="__main__":
-    numplayers=10
-    playersdata=[]
-    for i in range(1,numplayers+1):
-        playersdata.append(Player(i))
-    game=Game(playersdata)
-    ranklist=game.getRankList()
-    pygame.quit()
-    app=QApplication([])
-    print(ranklist)
-    rank=Rank(ranklist)
-    rank.show()
-    sys.exit(app.exec_())
