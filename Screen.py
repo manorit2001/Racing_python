@@ -7,6 +7,7 @@ class Screen:
         temp=get_monitors()[0]
         self.trackwidth=40
         self.width, self.height = temp.width,temp.height
+        self.fontSize=16
         # for debug purpose
         #self.width=800
         #self.height=600
@@ -15,7 +16,7 @@ class Screen:
         self.initcar()
         self.initendline()
     def initcar(self):
-        self.fontConfig = pygame.font.Font('freesansbold.ttf', 16)
+        self.fontConfig = pygame.font.Font('freesansbold.ttf', self.fontSize)
         self.car= pygame.image.load("res/images/car.png")
         self.carSize=self.car.get_rect().size
     def initendline(self):
@@ -37,9 +38,28 @@ class Screen:
                     pygame.quit()
                     exit(0)
 
-    def text(self,currentPlayer):
+    def showPlayerNo(self,currentPlayer):
         text=self.fontConfig.render(str(currentPlayer.playerNo),True,(255,0,0))
         self.screen.blit(text, (currentPlayer.coord[0]-len(str(currentPlayer.playerNo))*16,currentPlayer.coord[1]+(32-16)/2))
-    def drawtext(self,stri):
+    def showInfo(self,stri):
         text=self.fontConfig.render(stri,True,(255,0,0))
         self.screen.blit(text, (self.trackwidth,0))
+    def eventHandler(self):
+            # 8 - loop through the events
+            for event in pygame.event.get():
+                # check if the event is the X button 
+                if event.type==pygame.QUIT:
+                    # if it is quit the game
+                    return "exit"
+                    pygame.quit() 
+                    #check if it's a key press
+                if event.type==pygame.KEYDOWN:
+                    if event.key==pygame.K_p:
+                        # wait till p is pressed again
+                        return "pause"
+                        self.wait()
+                    if event.key==pygame.K_q:
+                        return "exit"
+                        pygame.quit()
+                    if event.key==pygame.K_RETURN:
+                        return "continue"

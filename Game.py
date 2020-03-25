@@ -24,7 +24,7 @@ class Game(Screen):
     def dispCars(self,players):
         for i in players:
             self.screen.blit(self.car, i.coord)
-            self.text(i)
+            self.showPlayerNo(i)
     def dispEndline(self,players):
         for i in players:
             self.screen.blit(self.endline, [self.endlineX,i.coord[1]])
@@ -72,7 +72,7 @@ class Game(Screen):
         coords=[(players.index(i),i.coord[1]) for i in self.semiRankList] # save the Y coord of the current users to set it back after recurse
         for i in range(3,1,-1): # countdown for tie match
             self.displayall(players)
-            self.drawtext("Resolving tie between {} in {}".format(str(self.semiRankList),i))
+            self.showInfo("Resolving tie between {} in {}".format(str(self.semiRankList),i))
             pygame.display.update()
             time.sleep(1)
         self.run(self.semiRankList,len(self.rankList)) # recurse for tie match
@@ -107,7 +107,7 @@ class Game(Screen):
             if(len(self.semiRankList)==1):
                 ithPosition=len(self.rankList)
                 temp=['st','nd','rd','th']
-                self.drawtext(str(ithPosition)+temp[ithPosition-1 if ithPosition<=4 else 3]+" is:"+str(self.rankList[-1]))
+                self.showInfo(str(ithPosition)+temp[ithPosition-1 if ithPosition<=4 else 3]+" is:"+str(self.rankList[-1]))
                 pygame.display.update()
                 time.sleep(1)
 
@@ -118,26 +118,33 @@ class Game(Screen):
                 break
 
             pygame.display.update()
-            self.eventHandler()
+            instruction=self.eventHandler()
+            if(instruction=="exit"):
+                self.rankList=[]
+                exit(0)
 
-    def eventHandler(self):
-            # 8 - loop through the events
-            for event in pygame.event.get():
-                # check if the event is the X button 
-                if event.type==pygame.QUIT:
-                    # if it is quit the game
-                    pygame.quit() 
-                    exit(0) 
-                    #check if it's a key press
-                if event.type==pygame.KEYDOWN:
-                    if event.key==pygame.K_p:
-                        # wait till p is pressed again
-                        self.wait()
-                    if event.key==pygame.K_q:
-                        self.rankList=[]
-                        pygame.quit()
-                        exit(0)
+
 
     def getRankList(self):
         return self.rankList
 
+if __name__=="__main__":
+    # add players
+    playersdata=[]
+    playernames=['hehe','haha','qwer','asdf','xzcvdv']
+    random.shuffle(playernames)
+    numplayers=len(playernames)
+    for i in range(1,numplayers+1):
+        playersdata.append(Player(i,playernames[i-1]))
+
+    # display the order given to ppl
+    rank=Rank(playernames,'Player Numbers','Number')
+
+    # run the game
+    game=Game(playersdata)
+    ranklist=game.getRankList()
+    pygame.quit()
+    print(ranklist)
+
+    #display the ranklist
+    rank=Rank(ranklist,'Ranklist','Position')
