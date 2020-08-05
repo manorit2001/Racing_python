@@ -9,3 +9,6 @@ This is a short game of luck made in python. Just start the game with the player
 `pip install -r requirements.txt`
 
 `Python3 Game.py <Names of Players>`
+
+##### Demo
+![](https://github.com/manorit2001/Racing_python/blob/master/res/images/demo-racing.gif)
