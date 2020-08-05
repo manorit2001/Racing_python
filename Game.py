@@ -1,6 +1,6 @@
 # 1 - Import library
 from pygame.locals import *
-import random
+import random,sys
 from Screen import * 
 from Player import Player
 from Rank import *
@@ -131,7 +131,7 @@ class Game(Screen):
 if __name__=="__main__":
     # add players
     playersdata=[]
-    playernames=['hehe','haha','qwer','asdf','xzcvdv']
+    playernames=sys.argv[1:]
     random.shuffle(playernames)
     numplayers=len(playernames)
     for i in range(1,numplayers+1):
